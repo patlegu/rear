@@ -146,7 +146,7 @@ function percent_encode() {
     # and running that with 'set -x' shows the UTF-8 encoded bytes cause it:
     #   + char=$'\303\244'
     #   + case $char in
-    #   + printf %%%02X ''\''Ã#'
+    #   + printf %%%02X ''\''Ãƒ#'
     #   %FFFFFFFFFFFFFFC3+
     # because the '\303\244' UTF-8 bytes should get encoded byte by byte
     # but not as two bytes at the same time so that the problem is
@@ -348,7 +348,15 @@ output_path() {
        (null|tape)  # no path for tape required
            path=""
            ;;
-       (file)  # type file needs a local path (must be mounted by user)
+       (file|sshfs)
+           # type file needs a local path (must be mounted by user)
+           # type sshfs need a local path too but is mounted and unmounted automatically before and after the files copy.
+           # To work properly, the OUPUT_URL must be set in the /etc/rear/local.conf file like this :
+           # OUTPUT_URL="sshfs://<remote user>@<remote host><remote path> <local mount point> <sshfs option>"
+           # Be carefull to not include the ":" between <remote host><remote path> as it's done automatically.
+           # This exemple OUTPUT_URL="sshfs://rear-user@11.222.333.444/home/rear-user/ISOs /home/rear-user/ISOs port=22222"
+           # to mount remote directory /home/rear-user/ISOs from the server 11.222.333.444 using the port 2222 in the local /home/rear-user/ISOs
+           # NOTE that sshfs can be cumulated like this : port=2222,idmap=user
            path="$path/${OUTPUT_PREFIX}"
            ;;
        (*)     # nfs, cifs, usb, a.o. need a temporary mount-path
